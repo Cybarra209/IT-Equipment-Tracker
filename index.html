@@ -5,11 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>IT Asset Inventory Tracker</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media print {
+      body * { visibility: hidden; }
+      #printArea, #printArea * { visibility: visible; }
+      #printArea { position: absolute; left: 0; top: 0; }
+    }
+  </style>
 </head>
 <body class="bg-gray-100 p-6">
   <div class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-md">
     <h1 class="text-2xl font-bold mb-4 text-center">IT Asset Inventory Tracker</h1>
 
+    <!-- Buttons -->
+    <div class="flex flex-wrap gap-2 mb-4">
+      <button onclick="toggleHistory()" class="bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600">Toggle Action History</button>
+      <button onclick="window.print()" class="bg-gray-700 text-white p-2 rounded hover:bg-gray-800">Print Assets</button>
+    </div>
+
+    <!-- Search & File Actions -->
+    <div class="flex flex-col md:flex-row gap-2 mb-4">
+      <input type="text" id="search" placeholder="Search..." class="w-full md:w-1/3 p-2 border rounded">
+      <button onclick="downloadAssets()" class="bg-green-500 text-white p-2 rounded hover:bg-green-600">Download CSV</button>
+      <label class="bg-purple-500 text-white p-2 rounded hover:bg-purple-600 cursor-pointer text-center">
+        Import CSV
+        <input type="file" id="importFile" accept=".csv" class="hidden">
+      </label>
+    </div>
+
+    <!-- Form -->
     <form id="assetForm" class="mb-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div><label>Item Type</label>
@@ -35,18 +59,13 @@
       <button type="submit" id="submitButton" class="mt-4 w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Add Asset</button>
     </form>
 
-    <div class="flex flex-col md:flex-row gap-2 mb-4">
-      <input type="text" id="search" placeholder="Search..." class="w-full md:w-1/3 p-2 border rounded">
-      <button onclick="downloadAssets()" class="bg-green-500 text-white p-2 rounded hover:bg-green-600">Download CSV</button>
-      <label class="bg-purple-500 text-white p-2 rounded hover:bg-purple-600 cursor-pointer text-center">
-        Import CSV
-        <input type="file" id="importFile" accept=".csv" class="hidden">
-      </label>
+    <!-- Table Area -->
+    <div id="printArea">
+      <div id="assetTableContainer" class="overflow-x-auto mb-6"></div>
     </div>
 
-    <div id="assetTableContainer" class="overflow-x-auto mb-6"></div>
-
-    <div class="bg-gray-100 p-4 rounded border">
+    <!-- Action History -->
+    <div id="historySection" class="bg-gray-100 p-4 rounded border hidden">
       <h2 class="font-bold text-lg mb-2">Action History</h2>
       <ul id="historyLog" class="text-sm text-gray-700 list-disc list-inside"></ul>
     </div>
@@ -55,6 +74,10 @@
   <script>
     let assets = JSON.parse(localStorage.getItem('assets')) || [];
     let history = JSON.parse(localStorage.getItem('history')) || [];
+
+    function toggleHistory() {
+      document.getElementById('historySection').classList.toggle('hidden');
+    }
 
     function saveAssets() {
       localStorage.setItem('assets', JSON.stringify(assets));
@@ -72,45 +95,39 @@
     function renderTable(filter = '') {
       const container = document.getElementById('assetTableContainer');
       const grouped = {};
-
       assets.forEach(asset => {
         if (!filter || Object.values(asset).some(val => val.toLowerCase().includes(filter.toLowerCase()))) {
           if (!grouped[asset.location]) grouped[asset.location] = [];
           grouped[asset.location].push(asset);
         }
       });
-
       let html = '';
       Object.keys(grouped).sort().forEach(location => {
         html += `<h3 class="text-lg font-semibold mt-4 mb-1">${location}</h3>`;
-        html += `<table class="min-w-full mb-4 border border-gray-300">
-          <thead><tr class="bg-gray-200">
-            <th class="py-2 px-4 border">Item Type</th>
-            <th class="py-2 px-4 border">Asset #</th>
-            <th class="py-2 px-4 border">Serial #</th>
-            <th class="py-2 px-4 border">Item Name</th>
-            <th class="py-2 px-4 border">Employee Name</th>
-            <th class="py-2 px-4 border">Actions</th>
-          </tr></thead><tbody>`;
-
+        html += `<table class="min-w-full mb-4 border border-gray-300"><thead><tr class="bg-gray-200">
+        <th class="py-2 px-4 border">Item Type</th>
+        <th class="py-2 px-4 border">Asset #</th>
+        <th class="py-2 px-4 border">Serial #</th>
+        <th class="py-2 px-4 border">Item Name</th>
+        <th class="py-2 px-4 border">Employee Name</th>
+        <th class="py-2 px-4 border">Actions</th>
+      </tr></thead><tbody>`;
         grouped[location].forEach((asset, index) => {
           const idx = assets.indexOf(asset);
           html += `<tr>
-            <td class="py-2 px-4 border">${asset.itemType}</td>
-            <td class="py-2 px-4 border">${asset.assetNumber}</td>
-            <td class="py-2 px-4 border">${asset.serialNumber}</td>
-            <td class="py-2 px-4 border">${asset.itemName}</td>
-            <td class="py-2 px-4 border">${asset.employeeName}</td>
-            <td class="py-2 px-4 border">
-              <button onclick="editAsset(${idx})" class="text-blue-600 hover:underline">Edit</button>
-              <button onclick="deleteAsset(${idx})" class="text-red-600 hover:underline ml-2">Delete</button>
-            </td>
-          </tr>`;
+          <td class="py-2 px-4 border">${asset.itemType}</td>
+          <td class="py-2 px-4 border">${asset.assetNumber}</td>
+          <td class="py-2 px-4 border">${asset.serialNumber}</td>
+          <td class="py-2 px-4 border">${asset.itemName}</td>
+          <td class="py-2 px-4 border">${asset.employeeName}</td>
+          <td class="py-2 px-4 border">
+            <button onclick="editAsset(${idx})" class="text-blue-600 hover:underline">Edit</button>
+            <button onclick="deleteAsset(${idx})" class="text-red-600 hover:underline ml-2">Delete</button>
+          </td>
+        </tr>`;
         });
-
         html += `</tbody></table>`;
       });
-
       container.innerHTML = html || `<p class="text-gray-600">No assets found.</p>`;
     }
 
@@ -125,7 +142,6 @@
         itemName: document.getElementById('itemName').value,
         employeeName: document.getElementById('employeeName').value
       };
-
       if (editIndex >= 0) {
         history.unshift(`Updated asset #${assets[editIndex].assetNumber} on ${new Date().toLocaleString()}`);
         assets[editIndex] = newAsset;
@@ -135,9 +151,7 @@
         history.unshift(`Added asset #${newAsset.assetNumber} on ${new Date().toLocaleString()}`);
         assets.push(newAsset);
       }
-
-      saveAssets();
-      saveHistory();
+      saveAssets(); saveHistory();
       renderTable(document.getElementById('search').value);
       renderHistory();
       e.target.reset();
@@ -160,21 +174,17 @@
       if (confirm('Are you sure you want to delete this asset?')) {
         assets.splice(index, 1);
         history.unshift(`Deleted asset #${asset.assetNumber} on ${new Date().toLocaleString()}`);
-        saveAssets();
-        saveHistory();
+        saveAssets(); saveHistory();
         renderTable(document.getElementById('search').value);
         renderHistory();
       }
     }
 
     function downloadAssets() {
-      const headers = ["Item Type", "Location", "Asset #", "Serial #", "Item Name", "Employee Name"];
+      const headers = ["Item Type","Location","Asset #","Serial #","Item Name","Employee Name"];
       const csvContent = [headers.join(",")].concat(
-        assets.map(a => [
-          a.itemType, a.location, a.assetNumber, a.serialNumber, a.itemName, a.employeeName
-        ].map(v => `"${v}"`).join(","))
+        assets.map(a => [a.itemType,a.location,a.assetNumber,a.serialNumber,a.itemName,a.employeeName].map(v => `"${v}"`).join(","))
       ).join("\n");
-
       const blob = new Blob([csvContent], { type: "text/csv" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
@@ -185,11 +195,10 @@
     document.getElementById("importFile").addEventListener("change", (event) => {
       const file = event.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
       reader.onload = function (e) {
         const lines = e.target.result.split("\n").map(line => line.trim()).filter(Boolean);
-        lines.shift(); // Remove header
+        lines.shift();
         lines.forEach(line => {
           const [itemType, location, assetNumber, serialNumber, itemName, employeeName] = line.split(',').map(v => v.replace(/"/g, ''));
           if (assetNumber && !assets.find(a => a.assetNumber === assetNumber)) {
@@ -197,8 +206,7 @@
             history.unshift(`Imported asset #${assetNumber} on ${new Date().toLocaleString()}`);
           }
         });
-        saveAssets();
-        saveHistory();
+        saveAssets(); saveHistory();
         renderTable(document.getElementById('search').value);
         renderHistory();
         event.target.value = '';
@@ -206,13 +214,9 @@
       reader.readAsText(file);
     });
 
-    document.getElementById('search').addEventListener('input', (e) => {
-      renderTable(e.target.value);
-    });
+    document.getElementById('search').addEventListener('input', (e) => renderTable(e.target.value));
 
-    // Initial render
-    renderTable();
-    renderHistory();
+    renderTable(); renderHistory();
   </script>
 </body>
 </html>
