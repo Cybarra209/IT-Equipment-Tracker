@@ -114,29 +114,28 @@
       const grouped = {};
       assets.forEach(asset => {
         if (!filter || Object.values(asset).some(val => val.toLowerCase().includes(filter.toLowerCase()))) {
-          if (!grouped[asset.location]) grouped[asset.location] = [];
-          grouped[asset.location].push(asset);
+          const key = `${asset.employeeName} (${asset.location})`;
+          if (!grouped[key]) grouped[key] = [];
+          grouped[key].push(asset);
         }
       });
       let html = '';
-      Object.keys(grouped).sort().forEach(location => {
-        html += `<h3 class="text-lg font-semibold mt-4 mb-1">${location}</h3>`;
+      Object.keys(grouped).sort().forEach(employee => {
+        html += `<h3 class="text-lg font-semibold mt-4 mb-1">${employee}</h3>`;
         html += `<table class="min-w-full mb-4 border border-gray-300"><thead><tr class="bg-gray-200">
         <th class="py-2 px-4 border">Item Type</th>
         <th class="py-2 px-4 border">Asset #</th>
         <th class="py-2 px-4 border">Serial #</th>
         <th class="py-2 px-4 border">Item Name</th>
-        <th class="py-2 px-4 border">Employee Name</th>
         <th class="py-2 px-4 border">Actions</th>
       </tr></thead><tbody>`;
-        grouped[location].forEach((asset, index) => {
+        grouped[employee].forEach((asset, index) => {
           const idx = assets.indexOf(asset);
           html += `<tr>
           <td class="py-2 px-4 border">${asset.itemType}</td>
           <td class="py-2 px-4 border">${asset.assetNumber}</td>
           <td class="py-2 px-4 border">${asset.serialNumber}</td>
           <td class="py-2 px-4 border">${asset.itemName}</td>
-          <td class="py-2 px-4 border">${asset.employeeName}</td>
           <td class="py-2 px-4 border">
             <button onclick="editAsset(${idx})" class="text-blue-600 hover:underline">Edit</button>
             <button onclick="deleteAsset(${idx})" class="text-red-600 hover:underline ml-2">Delete</button>
