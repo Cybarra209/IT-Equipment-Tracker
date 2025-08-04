@@ -93,7 +93,20 @@
 
     function renderHistory() {
       const log = document.getElementById("historyLog");
-      log.innerHTML = history.map(item => `<li>${item}</li>`).join('');
+      log.innerHTML = history.map((item, index) => `
+        <li>
+          ${item}
+          <button onclick="deleteHistory(${index})" class="text-red-500 ml-2 text-xs">Delete</button>
+        </li>
+      `).join('');
+    }
+
+    function deleteHistory(index) {
+      if (confirm('Delete this history entry?')) {
+        history.splice(index, 1);
+        saveHistory();
+        renderHistory();
+      }
     }
 
     function renderTable(filter = '') {
@@ -127,12 +140,17 @@
           <td class="py-2 px-4 border">
             <button onclick="editAsset(${idx})" class="text-blue-600 hover:underline">Edit</button>
             <button onclick="deleteAsset(${idx})" class="text-red-600 hover:underline ml-2">Delete</button>
+            <button onclick="viewHistory('${asset.assetNumber}')" class="text-gray-600 hover:underline ml-2">History</button>
           </td>
         </tr>`;
         });
         html += `</tbody></table>`;
       });
       container.innerHTML = html || `<p class="text-gray-600">No assets found.</p>`;
+    }
+
+    function viewHistory(assetNumber) {
+      alert(history.filter(entry => entry.includes(`#${assetNumber}`)).join('\n') || 'No history for this asset.');
     }
 
     document.getElementById('assetForm').addEventListener('submit', (e) => {
