@@ -15,19 +15,16 @@
 </head>
 <body class="bg-gray-100 p-6">
   <div class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-md">
-
     <div class="flex flex-col items-center mb-4">
       <img src="logo.png" alt="Logo" class="w-24 h-24 object-contain mb-2">
       <h1 class="text-2xl font-bold text-center">IT Asset Inventory Tracker</h1>
     </div>
 
-    <!-- Buttons -->
     <div class="flex flex-wrap gap-2 mb-4">
       <button onclick="toggleHistory()" class="bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600">Toggle Action History</button>
       <button onclick="window.print()" class="bg-gray-700 text-white p-2 rounded hover:bg-gray-800">Print Assets</button>
     </div>
 
-    <!-- Search & File Actions -->
     <div class="flex flex-col md:flex-row gap-2 mb-4">
       <input type="text" id="search" placeholder="Search..." class="w-full md:w-1/3 p-2 border rounded">
       <button onclick="downloadAssets()" class="bg-green-500 text-white p-2 rounded hover:bg-green-600">Download CSV</button>
@@ -37,14 +34,19 @@
       </label>
     </div>
 
-    <!-- Form -->
     <form id="assetForm" class="mb-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div><label>Item Type</label>
-          <select id="itemType" class="w-full p-2 border rounded"><option>Laptop</option><option>Monitor</option><option>Desktop</option><option>Docking Station</option><option>Miscellaneous</option></select>
+          <select id="itemType" class="w-full p-2 border rounded">
+            <option>Laptop</option><option>Monitor</option><option>Desktop</option>
+            <option>Docking Station</option><option>Miscellaneous</option>
+          </select>
         </div>
         <div><label>Location</label>
-          <select id="location" class="w-full p-2 border rounded"><option>Modesto</option><option>Ceres</option><option>Winton</option><option>Madera</option><option>Patterson</option></select>
+          <select id="location" class="w-full p-2 border rounded">
+            <option>Modesto</option><option>Ceres</option><option>Winton</option>
+            <option>Madera</option><option>Patterson</option>
+          </select>
         </div>
         <div><label>Asset #</label>
           <input type="text" id="assetNumber" class="w-full p-2 border rounded" required>
@@ -63,12 +65,10 @@
       <button type="submit" id="submitButton" class="mt-4 w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Add Asset</button>
     </form>
 
-    <!-- Table Area -->
     <div id="printArea">
       <div id="assetTableContainer" class="overflow-x-auto mb-6"></div>
     </div>
 
-    <!-- Action History -->
     <div id="historySection" class="bg-gray-100 p-4 rounded border hidden">
       <h2 class="font-bold text-lg mb-2">Action History</h2>
       <ul id="historyLog" class="text-sm text-gray-700 list-disc list-inside"></ul>
@@ -123,29 +123,37 @@
       Object.keys(grouped).sort().forEach(employee => {
         html += `<h3 class="text-lg font-semibold mt-4 mb-1">${employee}</h3>`;
         html += `<table class="min-w-full mb-4 border border-gray-300"><thead><tr class="bg-gray-200">
-        <th class="py-2 px-4 border">Item Type</th>
-        <th class="py-2 px-4 border">Asset #</th>
-        <th class="py-2 px-4 border">Serial #</th>
-        <th class="py-2 px-4 border">Item Name</th>
-        <th class="py-2 px-4 border">Actions</th>
-      </tr></thead><tbody>`;
+          <th class="py-2 px-4 border">Item Type</th>
+          <th class="py-2 px-4 border">Asset #</th>
+          <th class="py-2 px-4 border">Serial #</th>
+          <th class="py-2 px-4 border">Item Name</th>
+          <th class="py-2 px-4 border">Actions</th>
+        </tr></thead><tbody>`;
         grouped[employee].forEach((asset, index) => {
           const idx = assets.indexOf(asset);
           html += `<tr>
-          <td class="py-2 px-4 border">${asset.itemType}</td>
-          <td class="py-2 px-4 border">${asset.assetNumber}</td>
-          <td class="py-2 px-4 border">${asset.serialNumber}</td>
-          <td class="py-2 px-4 border">${asset.itemName}</td>
-          <td class="py-2 px-4 border">
-            <button onclick="editAsset(${idx})" class="text-blue-600 hover:underline">Edit</button>
-            <button onclick="deleteAsset(${idx})" class="text-red-600 hover:underline ml-2">Delete</button>
-            <button onclick="viewHistory('${asset.assetNumber}')" class="text-gray-600 hover:underline ml-2">History</button>
-          </td>
-        </tr>`;
+            <td class="py-2 px-4 border">${asset.itemType}</td>
+            <td class="py-2 px-4 border">${asset.assetNumber}</td>
+            <td class="py-2 px-4 border">${asset.serialNumber}</td>
+            <td class="py-2 px-4 border">${asset.itemName}</td>
+            <td class="py-2 px-4 border">
+              <button onclick="editAsset(${idx})" class="text-blue-600 hover:underline">Edit</button>
+              <button onclick="deleteAsset(${idx})" class="text-red-600 hover:underline ml-2">Delete</button>
+              <button onclick="viewHistory('${asset.assetNumber}')" class="text-gray-600 hover:underline ml-2">History</button>
+              <button onclick="quickAdd('${asset.employeeName}', '${asset.location}')" class="text-green-600 hover:underline ml-2">Add</button>
+            </td>
+          </tr>`;
         });
         html += `</tbody></table>`;
       });
       container.innerHTML = html || `<p class="text-gray-600">No assets found.</p>`;
+    }
+
+    function quickAdd(employeeName, location) {
+      document.getElementById('employeeName').value = employeeName;
+      document.getElementById('location').value = location;
+      document.getElementById('itemType').focus();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function viewHistory(assetNumber) {
@@ -237,7 +245,8 @@
 
     document.getElementById('search').addEventListener('input', (e) => renderTable(e.target.value));
 
-    renderTable(); renderHistory();
+    renderTable();
+    renderHistory();
   </script>
 </body>
 </html>
