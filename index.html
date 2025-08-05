@@ -113,6 +113,7 @@
 
     document.getElementById('assetForm').addEventListener('submit', function (e) {
       e.preventDefault();
+      const index = parseInt(document.getElementById('editIndex').value);
       const newAsset = {
         employeeName: document.getElementById('employeeName').value.trim(),
         location: document.getElementById('location').value.trim(),
@@ -123,18 +124,42 @@
       };
 
       if (!newAsset.employeeName || !newAsset.assetNumber || !newAsset.itemName) {
-        alert("Please fill in all required fields.");
+        showModal('Validation Error', '<li>Please fill in all required fields.</li>');
         return;
       }
 
-      assets.push(newAsset);
-      history.unshift(`Added asset #${newAsset.assetNumber} (${newAsset.itemName}) on ${new Date().toLocaleString()}`);
+      if (index >= 0) {
+        assets[index] = newAsset;
+        history.unshift(`Edited asset #${newAsset.assetNumber} (${newAsset.itemName}) on ${new Date().toLocaleString()}`);
+      } else {
+        assets.push(newAsset);
+        history.unshift(`Added asset #${newAsset.assetNumber} (${newAsset.itemName}) on ${new Date().toLocaleString()}`);
+      }
+
       localStorage.setItem('assets', JSON.stringify(assets));
       localStorage.setItem('history', JSON.stringify(history));
       document.getElementById('assetForm').reset();
+      document.getElementById('editIndex').value = -1;
       renderTable();
       renderHistory();
     });
+
+    function editAsset(index) {
+      const asset = assets[index];
+      document.getElementById('employeeName').value = asset.employeeName;
+      document.getElementById('location').value = asset.location;
+      document.getElementById('itemType').value = asset.itemType;
+      document.getElementById('assetNumber').value = asset.assetNumber;
+      document.getElementById('serialNumber').value = asset.serialNumber;
+      document.getElementById('itemName').value = asset.itemName;
+      document.getElementById('editIndex').value = index;
+    }
+
+    function showModal(title, content) {
+      document.getElementById('modalTitle').innerText = title;
+      document.getElementById('modalContent').innerHTML = content;
+      document.getElementById('modal').classList.remove('hidden');
+    }
 
     function renderTable(filter = '') {
       const container = document.getElementById('assetTableContainer');
@@ -173,6 +198,7 @@
             <td class="p-2 border">${asset.itemName}</td>
             <td class="p-2 border space-x-1">
               <button class="text-blue-500 underline" onclick="viewHistory('${asset.assetNumber}', '${asset.itemType}')">History</button>
+              <button class="text-yellow-500 underline" onclick="editAsset(${index})">Edit</button>
               <button class="text-red-500 underline" onclick="deleteAsset(${index})">Delete</button>
             </td>
           </tr>
@@ -216,7 +242,7 @@
 
     function viewHistory(assetNumber, itemType) {
       const logs = history.filter(entry => entry.includes(`#${assetNumber}`));
-      const title = `History for ${itemType} (Asset #${assetNumber})`;
+      const title = `History for ${itemType} (Asset ${assetNumber})`;
       document.getElementById('modalTitle').innerText = title;
       const modalContent = document.getElementById('modalContent');
       modalContent.innerHTML = logs.length ? logs.map(l => `<li>${l}</li>`).join('') : '<li>No history available.</li>';
@@ -244,7 +270,7 @@
       const headers = Object.keys(assets[0]);
       const csvRows = [headers.join(',')];
       for (const asset of assets) {
-        const row = headers.map(header => `"${(asset[header] || '').replace(/"/g, '""')}"`).join(',');
+        const row = headers.map(header => (asset[header] || '').replace(/"/g, '""')).join(',');
         csvRows.push(row);
       }
       const csvData = csvRows.join('\n');
@@ -272,7 +298,7 @@
           const values = lines[i].split(',');
           const asset = {};
           headers.forEach((header, index) => {
-            asset[header.trim()] = values[index]?.trim() || '';
+            asset[header.trim()] = values[index]?.trim().replace(/^"|"$/g, '') || '';
           });
           if (asset.assetNumber && asset.itemName) {
             assets.push(asset);
@@ -288,7 +314,6 @@
       reader.readAsText(file);
     }
 
-    // Initial render
     renderTable();
     renderHistory();
   </script>
