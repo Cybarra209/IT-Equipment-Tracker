@@ -139,7 +139,7 @@
             <td class="py-2 px-4 border">
               <button onclick="editAsset(${idx})" class="text-blue-600 hover:underline">Edit</button>
               <button onclick="deleteAsset(${idx})" class="text-red-600 hover:underline ml-2">Delete</button>
-              <button onclick="viewHistory('${asset.assetNumber}')" class="text-gray-600 hover:underline ml-2">History</button>
+              <button onclick="viewHistory('${asset.assetNumber}', '${asset.itemName}')" class="text-gray-600 hover:underline ml-2">History</button>
               <button onclick="quickAdd('${asset.employeeName}', '${asset.location}')" class="text-green-600 hover:underline ml-2">Add</button>
             </td>
           </tr>`;
@@ -156,8 +156,10 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function viewHistory(assetNumber) {
-      alert(history.filter(entry => entry.includes(`#${assetNumber}`)).join('\n') || 'No history for this asset.');
+    function viewHistory(assetNumber, itemName) {
+      const logs = history.filter(entry => entry.includes(`#${assetNumber}`));
+      const header = `History for ${itemName} (#${assetNumber}):\n`;
+      alert(logs.length ? header + logs.join('\n') : `${header}No history available.`);
     }
 
     document.getElementById('assetForm').addEventListener('submit', (e) => {
