@@ -145,6 +145,27 @@
       renderHistory();
     });
 
+    function editAsset(index) {
+      const asset = assets[index];
+      document.getElementById('employeeName').value = asset.employeeName;
+      document.getElementById('location').value = asset.location;
+      document.getElementById('itemType').value = asset.itemType;
+      document.getElementById('assetNumber').value = asset.assetNumber;
+      document.getElementById('serialNumber').value = asset.serialNumber;
+      document.getElementById('itemName').value = asset.itemName;
+      document.getElementById('editIndex').value = index;
+      document.getElementById('submitButton').textContent = 'Update Asset';
+    }
+
+    function deleteAsset(index) {
+      const removed = assets.splice(index, 1)[0];
+      history.unshift(`Deleted asset #${removed.assetNumber} on ${new Date().toLocaleString()}`);
+      localStorage.setItem('assets', JSON.stringify(assets));
+      localStorage.setItem('history', JSON.stringify(history));
+      renderTable(document.getElementById('search').value);
+      renderHistory();
+    }
+
     function renderTable(query = '') {
       const container = document.getElementById('assetTableContainer');
       const filteredAssets = assets.filter(asset =>
@@ -194,6 +215,19 @@
       container.innerHTML = html;
     }
 
+    function renderHistory() {
+      const historyLog = document.getElementById('historyLog');
+      historyLog.innerHTML = history.map((entry, index) =>
+        `<li>${entry} <button onclick="deleteHistory(${index})" class="text-red-500 ml-2">Delete</button></li>`
+      ).join('');
+    }
+
+    function deleteHistory(index) {
+      history.splice(index, 1);
+      localStorage.setItem('history', JSON.stringify(history));
+      renderHistory();
+    }
+
     function viewHistory(assetNumber, itemType) {
       const logs = history.filter(entry => entry.includes(`#${assetNumber}`));
       const title = `History for ${itemType} (Asset #${assetNumber})`;
@@ -222,11 +256,6 @@
 
     function toggleHistory() {
       document.getElementById('historySection').classList.toggle('hidden');
-    }
-
-    function renderHistory() {
-      const historyLog = document.getElementById('historyLog');
-      historyLog.innerHTML = history.map(entry => `<li>${entry}</li>`).join('');
     }
 
     renderTable();
