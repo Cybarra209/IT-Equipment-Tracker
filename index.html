@@ -48,7 +48,7 @@
     </div>
 
     <div class="flex flex-col md:flex-row gap-2 mb-4">
-      <input type="text" id="search" placeholder="Search..." class="w-full md:w-1/3 p-2 border rounded">
+      <input type="text" id="search" placeholder="Search..." class="w-full md:w-1/3 p-2 border rounded" oninput="renderTable(this.value)">
       <button onclick="downloadAssets()" class="bg-green-500 text-white p-2 rounded hover:bg-green-600">Download CSV</button>
       <label class="bg-purple-500 text-white p-2 rounded hover:bg-purple-600 cursor-pointer text-center">
         Import CSV
@@ -145,6 +145,55 @@
       renderHistory();
     });
 
+    function renderTable(query = '') {
+      const container = document.getElementById('assetTableContainer');
+      const filteredAssets = assets.filter(asset =>
+        Object.values(asset).some(val => val.toLowerCase().includes(query.toLowerCase()))
+      );
+
+      if (filteredAssets.length === 0) {
+        container.innerHTML = "<p class='text-gray-500'>No assets found.</p>";
+        return;
+      }
+
+      let html = `
+        <table class="min-w-full text-sm border">
+          <thead class="bg-gray-200">
+            <tr>
+              <th class="p-2 border">Employee Name</th>
+              <th class="p-2 border">Location</th>
+              <th class="p-2 border">Item Type</th>
+              <th class="p-2 border">Asset #</th>
+              <th class="p-2 border">Serial #</th>
+              <th class="p-2 border">Item Name</th>
+              <th class="p-2 border">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      filteredAssets.forEach((asset, index) => {
+        html += `
+          <tr class="border-b">
+            <td class="p-2 border">${asset.employeeName}</td>
+            <td class="p-2 border">${asset.location}</td>
+            <td class="p-2 border">${asset.itemType}</td>
+            <td class="p-2 border">${asset.assetNumber}</td>
+            <td class="p-2 border">${asset.serialNumber}</td>
+            <td class="p-2 border">${asset.itemName}</td>
+            <td class="p-2 border space-x-2">
+              <button onclick="editAsset(${index})" class="text-blue-600 hover:underline">Edit</button>
+              <button onclick="deleteAsset(${index})" class="text-red-600 hover:underline">Delete</button>
+              <button onclick="viewHistory('${asset.assetNumber}', '${asset.itemType}')" class="text-gray-600 hover:underline">History</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
     function viewHistory(assetNumber, itemType) {
       const logs = history.filter(entry => entry.includes(`#${assetNumber}`));
       const title = `History for ${itemType} (Asset #${assetNumber})`;
@@ -175,16 +224,11 @@
       document.getElementById('historySection').classList.toggle('hidden');
     }
 
-    function renderTable(query = '') {
-      // implementation left for previous logic
-    }
-
     function renderHistory() {
       const historyLog = document.getElementById('historyLog');
       historyLog.innerHTML = history.map(entry => `<li>${entry}</li>`).join('');
     }
 
-    // initialize on load
     renderTable();
     renderHistory();
   </script>
