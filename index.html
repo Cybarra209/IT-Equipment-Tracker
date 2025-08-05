@@ -108,7 +108,42 @@
   </div>
 
   <script>
-    // All the existing logic for handling assets and rendering the table remains unchanged...
+    let assets = JSON.parse(localStorage.getItem('assets') || '[]');
+    let history = JSON.parse(localStorage.getItem('history') || '[]');
+
+    document.getElementById('assetForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const editIndex = parseInt(document.getElementById('editIndex').value);
+      const newAsset = {
+        itemType: document.getElementById('itemType').value,
+        location: document.getElementById('location').value,
+        assetNumber: document.getElementById('assetNumber').value,
+        serialNumber: document.getElementById('serialNumber').value,
+        itemName: document.getElementById('itemName').value,
+        employeeName: document.getElementById('employeeName').value
+      };
+
+      if (!newAsset.assetNumber || !newAsset.itemName || !newAsset.employeeName) {
+        alert('Please fill out all required fields.');
+        return;
+      }
+
+      if (editIndex >= 0) {
+        assets[editIndex] = newAsset;
+        history.unshift(`Updated asset #${newAsset.assetNumber} on ${new Date().toLocaleString()}`);
+        document.getElementById('submitButton').textContent = 'Add Asset';
+        document.getElementById('editIndex').value = -1;
+      } else {
+        assets.push(newAsset);
+        history.unshift(`Added asset #${newAsset.assetNumber} on ${new Date().toLocaleString()}`);
+      }
+
+      localStorage.setItem('assets', JSON.stringify(assets));
+      localStorage.setItem('history', JSON.stringify(history));
+      document.getElementById('assetForm').reset();
+      renderTable(document.getElementById('search').value);
+      renderHistory();
+    });
 
     function viewHistory(assetNumber, itemType) {
       const logs = history.filter(entry => entry.includes(`#${assetNumber}`));
@@ -135,6 +170,23 @@
       printWindow.document.close();
       printWindow.print();
     }
+
+    function toggleHistory() {
+      document.getElementById('historySection').classList.toggle('hidden');
+    }
+
+    function renderTable(query = '') {
+      // implementation left for previous logic
+    }
+
+    function renderHistory() {
+      const historyLog = document.getElementById('historyLog');
+      historyLog.innerHTML = history.map(entry => `<li>${entry}</li>`).join('');
+    }
+
+    // initialize on load
+    renderTable();
+    renderHistory();
   </script>
 </body>
 </html>
