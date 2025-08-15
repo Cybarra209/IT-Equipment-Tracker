@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -41,61 +40,60 @@
       <h1 class="text-2xl font-bold text-center">IT Asset Inventory Tracker</h1>
     </div>
 
-    <div class="flex flex-wrap gap-2 mb-4">
-      <button onclick="toggleHistory()" class="bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600">Toggle Action History</button>
-      <button onclick="window.print()" class="bg-gray-700 text-white p-2 rounded hover:bg-gray-800">Print Assets</button>
-      <button onclick="printModalHistory()" class="bg-gray-600 text-white p-2 rounded hover:bg-gray-700">Print History</button>
+<div class="flex flex-wrap gap-2 mb-4">
+  <button onclick="toggleHistory()" class="bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600">Toggle Action History</button>
+  <button onclick="window.print()" class="bg-gray-700 text-white p-2 rounded hover:bg-gray-800">Print Assets</button>
+  <button onclick="printModalHistory()" class="bg-gray-600 text-white p-2 rounded hover:bg-gray-700">Print History</button>
+</div>
+
+<div class="flex flex-col md:flex-row gap-2 mb-4">
+  <input type="text" id="search" placeholder="Search..." class="w-full md:w-1/3 p-2 border rounded" oninput="renderTable(this.value)">
+  <button onclick="downloadAssets()" class="bg-green-500 text-white p-2 rounded hover:bg-green-600">Download CSV</button>
+  <label class="bg-purple-500 text-white p-2 rounded hover:bg-purple-600 cursor-pointer text-center">
+    Import CSV
+    <input type="file" id="importFile" accept=".csv" class="hidden" onchange="importCSV(event)">
+  </label>
+</div>
+
+<form id="assetForm" class="mb-4">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div><label>Employee Name</label>
+      <input type="text" id="employeeName" class="w-full p-2 border rounded" required>
     </div>
-
-    <div class="flex flex-col md:flex-row gap-2 mb-4">
-      <input type="text" id="search" placeholder="Search..." class="w-full md:w-1/3 p-2 border rounded" oninput="renderTable(this.value)">
-      <button onclick="downloadAssets()" class="bg-green-500 text-white p-2 rounded hover:bg-green-600">Download CSV</button>
-      <label class="bg-purple-500 text-white p-2 rounded hover:bg-purple-600 cursor-pointer text-center">
-        Import CSV
-        <input type="file" id="importFile" accept=".csv" class="hidden" onchange="importCSV(event)">
-      </label>
+    <div><label>Location</label>
+      <select id="location" class="w-full p-2 border rounded">
+        <option>Modesto</option><option>Ceres</option><option>Winton</option>
+        <option>Madera</option><option>Patterson</option>
+      </select>
     </div>
-
-    <form id="assetForm" class="mb-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div><label>Employee Name</label>
-          <input type="text" id="employeeName" class="w-full p-2 border rounded" required>
-        </div>
-        <div><label>Location</label>
-          <select id="location" class="w-full p-2 border rounded">
-            <option>Modesto</option><option>Ceres</option><option>Winton</option>
-            <option>Madera</option><option>Patterson</option>
-          </select>
-        </div>
-        <div><label>Item Type</label>
-          <select id="itemType" class="w-full p-2 border rounded">
-            <option>Laptop</option><option>Monitor</option><option>Desktop</option>
-            <option>Docking Station</option><option>Printer</option><option>Miscellaneous</option>
-          </select>
-        </div>
-        <div><label>Asset #</label>
-          <input type="text" id="assetNumber" class="w-full p-2 border rounded" required>
-        </div>
-        <div><label>Serial #</label>
-          <input type="text" id="serialNumber" class="w-full p-2 border rounded">
-        </div>
-        <div><label>Item Name</label>
-          <input type="text" id="itemName" class="w-full p-2 border rounded" required>
-        </div>
-      </div>
-      <input type="hidden" id="editIndex" value="-1">
-      <button type="submit" id="submitButton" class="mt-4 w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Add Asset</button>
-    </form>
-
-    <div id="printArea">
-      <div id="assetTableContainer" class="overflow-x-auto mb-6"></div>
+    <div><label>Item Type</label>
+      <select id="itemType" class="w-full p-2 border rounded">
+        <option>Laptop</option><option>Monitor</option><option>Desktop</option>
+        <option>Docking Station</option><option>Printer</option><option>Miscellaneous</option>
+      </select>
     </div>
-
-    <div id="historySection" class="bg-gray-100 p-4 rounded border hidden">
-      <h2 class="font-bold text-lg mb-2">Action History</h2>
-      <ul id="historyLog" class="text-sm text-gray-700 list-disc list-inside"></ul>
+    <div><label>Asset #</label>
+      <input type="text" id="assetNumber" class="w-full p-2 border rounded" required>
+    </div>
+    <div><label>Serial #</label>
+      <input type="text" id="serialNumber" class="w-full p-2 border rounded" required>
+    </div>
+    <div><label>Item Name</label>
+      <input type="text" id="itemName" class="w-full p-2 border rounded" required>
     </div>
   </div>
+  <input type="hidden" id="editIndex" value="-1">
+  <button type="submit" id="submitButton" class="mt-4 w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Add Asset</button>
+</form>
+
+<div id="printArea">
+  <div id="assetTableContainer" class="overflow-x-auto mb-6"></div>
+</div>
+
+<div id="historySection" class="bg-gray-100 p-4 rounded border hidden">
+  <h2 class="font-bold text-lg mb-2">Action History</h2>
+  <ul id="historyLog" class="text-sm text-gray-700 list-disc list-inside"></ul>
+</div>  </div>
 
   <div id="modal" class="modal hidden">
     <div class="modal-content">
@@ -108,126 +106,11 @@
   </div>
 
   <script>
-    // GitHub configuration
-    const repoOwner = "cybarra209";
-    const repoName = "IT-Equipment-Tracker";
-    const branch = "main";
-    const filePath = "data.json";
-    const githubApiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
-    const githubToken = "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"; // Replace with new PAT from https://github.com/settings/tokens
     let assets = JSON.parse(localStorage.getItem('assets') || '[]');
     let history = JSON.parse(localStorage.getItem('history') || '[]');
 
-    // Show modal with error or message
-    function showModal(title, content) {
-      console.log(`Showing modal: ${title}`);
-      document.getElementById('modalTitle').innerText = title;
-      document.getElementById('modalContent').innerHTML = content;
-      document.getElementById('modal').classList.remove('hidden');
-    }
-
-    // Fetch data from GitHub
-    async function loadData() {
-      try {
-        console.log("Fetching data from GitHub...");
-        const response = await fetch(`${githubApiUrl}?ref=${branch}`, {
-          headers: {
-            "Accept": "application/vnd.github.v3+json",
-          },
-        });
-        const text = await response.text();
-        if (!response.ok) {
-          console.error("Raw response:", text);
-          try {
-            const error = JSON.parse(text);
-            throw new Error(`Failed to fetch data: ${response.status} ${error.message}`);
-          } catch {
-            throw new Error(`Failed to fetch data: ${response.status} (Non-JSON response)`);
-          }
-        }
-        const data = JSON.parse(text);
-        console.log("GitHub response:", data);
-        const content = JSON.parse(atob(data.content));
-        if (JSON.stringify(content.assets) !== JSON.stringify(assets) ||
-            JSON.stringify(content.history) !== JSON.stringify(history)) {
-          assets = content.assets || [];
-          history = content.history || [];
-          localStorage.setItem('assets', JSON.stringify(assets));
-          localStorage.setItem('history', JSON.stringify(history));
-          renderTable();
-          renderHistory();
-        }
-        console.log("Data loaded successfully:", assets, history);
-        return data.sha;
-      } catch (error) {
-        console.error("Error loading data:", error.message);
-        showModal("Error", `<li>Failed to load data from GitHub: ${error.message}. Using cached data.</li>`);
-        renderTable();
-        renderHistory();
-        return null;
-      }
-    }
-
-    // Save data to GitHub with retry logic
-    async function saveData(newAssets, newHistory, message, retries = 3) {
-      for (let i = 0; i < retries; i++) {
-        try {
-          console.log(`Saving data (attempt ${i + 1})...`);
-          const sha = await loadData();
-          if (!sha) throw new Error("No SHA returned");
-          const content = btoa(JSON.stringify({ assets: newAssets, history: newHistory }));
-          const response = await fetch(githubApiUrl, {
-            method: "PUT",
-            headers: {
-              "Accept": "application/vnd.github.v3+json",
-              "Authorization": `Bearer ${githubToken}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              message: message || "Update data.json",
-              content: content,
-              sha: sha,
-              branch: branch,
-            }),
-          });
-          if (!response.ok) {
-            const text = await response.text();
-            console.error("Save response:", text);
-            try {
-              const error = JSON.parse(text);
-              throw new Error(`Failed to save data: ${response.status} ${error.message}`);
-            } catch {
-              throw new Error(`Failed to save data: ${response.status} (Non-JSON response)`);
-            }
-          }
-          console.log("Data saved successfully");
-          localStorage.setItem('assets', JSON.stringify(newAssets));
-          localStorage.setItem('history', JSON.stringify(newHistory));
-          assets = newAssets;
-          history = newHistory;
-          renderTable();
-          renderHistory();
-          return;
-        } catch (error) {
-          console.error(`Save attempt ${i + 1} failed:`, error.message);
-          if (i === retries - 1) {
-            showModal("Error", `<li>Failed to save data to GitHub: ${error.message}. Changes saved locally. Please check your GitHub Personal Access Token.</li>`);
-            localStorage.setItem('assets', JSON.stringify(newAssets));
-            localStorage.setItem('history', JSON.stringify(newHistory));
-            assets = newAssets;
-            history = newHistory;
-            renderTable();
-            renderHistory();
-          }
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-    }
-
-    // Form submission
-    document.getElementById('assetForm').addEventListener('submit', async function (e) {
+    document.getElementById('assetForm').addEventListener('submit', function (e) {
       e.preventDefault();
-      console.log("Form submitted");
       const index = parseInt(document.getElementById('editIndex').value);
       const newAsset = {
         employeeName: document.getElementById('employeeName').value.trim(),
@@ -237,36 +120,29 @@
         serialNumber: document.getElementById('serialNumber').value.trim(),
         itemName: document.getElementById('itemName').value.trim(),
       };
-      console.log("New asset data:", newAsset);
 
       if (!newAsset.employeeName || !newAsset.assetNumber || !newAsset.itemName) {
-        console.log("Validation failed: Missing required fields");
-        showModal('Validation Error', '<li>Please fill in all required fields (Employee Name, Asset #, Item Name).</li>');
+        showModal('Validation Error', '<li>Please fill in all required fields.</li>');
         return;
       }
 
-      const updatedAssets = [...assets];
-      const updatedHistory = [...history];
       if (index >= 0) {
-        console.log(`Editing asset at index ${index}`);
-        updatedAssets[index] = newAsset;
-        updatedHistory.unshift(`Edited asset #${newAsset.assetNumber} (${newAsset.itemName}) on ${new Date().toLocaleString()}`);
+        assets[index] = newAsset;
+        history.unshift(`Edited asset #${newAsset.assetNumber} (${newAsset.itemName}) on ${new Date().toLocaleString()}`);
       } else {
-        console.log("Adding new asset");
-        updatedAssets.push(newAsset);
-        updatedHistory.unshift(`Added asset #${newAsset.assetNumber} (${newAsset.itemName}) on ${new Date().toLocaleString()}`);
+        assets.push(newAsset);
+        history.unshift(`Added asset #${newAsset.assetNumber} (${newAsset.itemName}) on ${new Date().toLocaleString()}`);
       }
 
-      console.log("Saving to GitHub:", updatedAssets, updatedHistory);
-      await saveData(updatedAssets, updatedHistory, `Update asset #${newAsset.assetNumber}`);
+      localStorage.setItem('assets', JSON.stringify(assets));
+      localStorage.setItem('history', JSON.stringify(history));
       document.getElementById('assetForm').reset();
       document.getElementById('editIndex').value = -1;
-      console.log("Form reset");
+      renderTable();
+      renderHistory();
     });
 
-    // Edit asset
     function editAsset(index) {
-      console.log(`Editing asset at index ${index}`);
       const asset = assets[index];
       document.getElementById('employeeName').value = asset.employeeName;
       document.getElementById('location').value = asset.location;
@@ -277,48 +153,13 @@
       document.getElementById('editIndex').value = index;
     }
 
-    // Delete asset
-    async function deleteAsset(index) {
-      console.log(`Deleting asset at index ${index}`);
-      const asset = assets[index];
-      if (!confirm(`Are you sure you want to delete asset #${asset.assetNumber}?`)) return;
-      const updatedAssets = assets.filter((_, i) => i !== index);
-      const updatedHistory = [...history, `Deleted asset #${asset.assetNumber} (${asset.itemName}) on ${new Date().toLocaleString()}`];
-      await saveData(updatedAssets, updatedHistory, `Delete asset #${asset.assetNumber}`);
-    }
-
-    // Delete history entry
-    async function deleteHistory(index) {
-      console.log(`Deleting history entry at index ${index}`);
-      if (!confirm("Delete this history entry?")) return;
-      const updatedHistory = history.filter((_, i) => i !== index);
-      await saveData(assets, updatedHistory, "Delete history entry");
-    }
-
-    // View history for an asset
-    function viewHistory(assetNumber, itemType) {
-      console.log(`Viewing history for asset #${assetNumber}`);
-      const logs = history.filter(entry => entry.includes(`#${assetNumber}`));
-      const title = `History for ${itemType} (Asset ${assetNumber})`;
+    function showModal(title, content) {
       document.getElementById('modalTitle').innerText = title;
-      const modalContent = document.getElementById('modalContent');
-      modalContent.innerHTML = logs.length ? logs.map(l => `<li>${l}</li>`).join('') : '<li>No history available.</li>';
+      document.getElementById('modalContent').innerHTML = content;
       document.getElementById('modal').classList.remove('hidden');
     }
 
-    // Polling for real-time updates
-    setInterval(() => {
-      console.log("Polling for updates...");
-      loadData();
-    }, 10000);
-
-    // Initialize data
-    console.log("Initializing application...");
-    loadData();
-
-    // Render table
     function renderTable(filter = '') {
-      console.log("Rendering table with filter:", filter);
       const container = document.getElementById('assetTableContainer');
       if (assets.length === 0) {
         container.innerHTML = '<p class="text-gray-500">No assets recorded.</p>';
@@ -366,28 +207,47 @@
       container.innerHTML = html;
     }
 
-    // Render history
-    function renderHistory() {
-      console.log("Rendering history");
-      const historyLog = document.getElementById('historyLog');
-      historyLog.innerHTML = history.map((entry, i) => `<li>${entry} <button onclick="deleteHistory(${i})" class="text-red-500 ml-2">🗑</button></li>`).join('');
+    function deleteAsset(index) {
+      const asset = assets[index];
+      if (!confirm(`Are you sure you want to delete asset #${asset.assetNumber}?`)) return;
+      history.unshift(`Deleted asset #${asset.assetNumber} (${asset.itemName}) on ${new Date().toLocaleString()}`);
+      assets.splice(index, 1);
+      localStorage.setItem('assets', JSON.stringify(assets));
+      localStorage.setItem('history', JSON.stringify(history));
+      renderTable();
+      renderHistory();
     }
 
-    // Toggle history section
+    function renderHistory() {
+      const historyLog = document.getElementById('historyLog');
+      historyLog.innerHTML = history.map((entry, i) => `<li>${entry} <button onclick="deleteHistory(${i})" class="text-red-500 ml-2"></button></li>`).join('');
+    }
+
+    function deleteHistory(index) {
+      if (!confirm("Delete this history entry?")) return;
+      history.splice(index, 1);
+      localStorage.setItem('history', JSON.stringify(history));
+      renderHistory();
+    }
+
     function toggleHistory() {
-      console.log("Toggling history section");
       document.getElementById('historySection').classList.toggle('hidden');
     }
 
-    // Close modal
     function closeModal() {
-      console.log("Closing modal");
       document.getElementById('modal').classList.add('hidden');
     }
 
-    // Print history
+    function viewHistory(assetNumber, itemType) {
+      const logs = history.filter(entry => entry.includes(`#${assetNumber}`));
+      const title = `History for ${itemType} (Asset ${assetNumber})`;
+      document.getElementById('modalTitle').innerText = title;
+      const modalContent = document.getElementById('modalContent');
+      modalContent.innerHTML = logs.length ? logs.map(l => `<li>${l}</li>`).join('') : '<li>No history available.</li>';
+      document.getElementById('modal').classList.remove('hidden');
+    }
+
     function printModalHistory() {
-      console.log("Printing history");
       const printWindow = window.open('', '', 'width=800,height=600');
       const title = document.getElementById('modalTitle').innerText;
       const items = Array.from(document.getElementById('modalContent').children).map(li => `<li>${li.innerText}</li>`).join('');
@@ -400,14 +260,12 @@
       printWindow.print();
     }
 
-    // Download assets as CSV
     function downloadAssets() {
-      console.log("Downloading assets as CSV");
       if (!assets.length) {
-        showModal("Error", "<li>No assets to download.</li>");
+        alert("No assets to download.");
         return;
       }
-      const headers = ["employeeName", "location", "itemType", "assetNumber", "serialNumber", "itemName"];
+      const headers = Object.keys(assets[0]);
       const csvRows = [headers.join(',')];
       for (const asset of assets) {
         const row = headers.map(header => (asset[header] || '').replace(/"/g, '""')).join(',');
@@ -424,21 +282,16 @@
       document.body.removeChild(link);
     }
 
-    // Import CSV
-    async function importCSV(event) {
-      console.log("Importing CSV");
+    function importCSV(event) {
       const file = event.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = async function (e) {
-        console.log("CSV file read");
+      reader.onload = function (e) {
         const text = e.target.result;
         const lines = text.trim().split('\n');
         const headers = lines[0].split(',');
 
-        const updatedAssets = [...assets];
-        const updatedHistory = [...history];
         for (let i = 1; i < lines.length; i++) {
           const values = lines[i].split(',');
           const asset = {};
@@ -446,15 +299,22 @@
             asset[header.trim()] = values[index]?.trim().replace(/^"|"$/g, '') || '';
           });
           if (asset.assetNumber && asset.itemName) {
-            updatedAssets.push(asset);
-            updatedHistory.unshift(`Imported asset #${asset.assetNumber} (${asset.itemName}) on ${new Date().toLocaleString()}`);
+            assets.push(asset);
+            history.unshift(`Imported asset #${asset.assetNumber} (${asset.itemName}) on ${new Date().toLocaleString()}`);
           }
         }
-        console.log("Saving imported CSV data:", updatedAssets, updatedHistory);
-        await saveData(updatedAssets, updatedHistory, "Import CSV data");
+
+        localStorage.setItem('assets', JSON.stringify(assets));
+        localStorage.setItem('history', JSON.stringify(history));
+        renderTable();
+        renderHistory();
       };
       reader.readAsText(file);
     }
+
+    renderTable();
+    renderHistory();
   </script>
 </body>
 </html>
+
