@@ -108,10 +108,67 @@
   </div>
 
   <script>
-    let assets = JSON.parse(localStorage.getItem('assets') || '[]');
-    let history = JSON.parse(localStorage.getItem('history') || '[]');
+    // GitHub configuration
+    const repoOwner = "cybarra209";
+    const repoName = "IT-Equipment-Tracker";
+    const branch = "main";
+    const filePath = "data.json";
+    const githubApiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
+    const githubToken = "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";
+    let assets = [];
+    let history = [];
 
-    document.getElementById('assetForm').addEventListener('submit', function (e) {
+    // Fetch data from GitHub
+    async function loadData() {
+      try {
+        const response = await fetch(`${githubApiUrl}?ref=${branch}`, {
+          headers: {
+            "Accept": "application/vnd.github.v3+json",
+          },
+        });
+        if (!response.ok) throw new Error("Failed to fetch data");
+        const data = await response.json();
+        const content = JSON.parse(atob(data.content)); // Decode base64 content
+        assets = content.assets || [];
+        history = content.history || [];
+        renderTable();
+        renderHistory();
+        return data.sha; // Return file SHA for updates
+      } catch (error) {
+        console.error("Error loading data:", error);
+        showModal("Error", "<li>Failed to load data from GitHub. Please try again later.</li>");
+      }
+    }
+
+    // Save data to GitHub
+    async function saveData(newAssets, newHistory, message) {
+      try {
+        const sha = await loadData(); // Get current file SHA
+        const content = btoa(JSON.stringify({ assets: newAssets, history: newHistory })); // Encode to base64
+        const response = await fetch(githubApiUrl, {
+          method: "PUT",
+          headers: {
+            "Accept": "application/vnd.github.v3+json",
+            "Authorization": `Bearer ${githubToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: message || "Update data.json",
+            content: content,
+            sha: sha,
+            branch: branch,
+          }),
+        });
+        if (!response.ok) throw new Error("Failed to save data");
+        await loadData(); // Refresh data after saving
+      } catch (error) {
+        console.error("Error saving data:", error);
+        showModal("Error", "<li>Failed to save data to GitHub. Please try again.</li>");
+      }
+    }
+
+    // Form submission
+    document.getElementById('assetForm').addEventListener('submit', async function (e) {
       e.preventDefault();
       const index = parseInt(document.getElementById('editIndex').value);
       const newAsset = {
@@ -128,22 +185,22 @@
         return;
       }
 
+      const updatedAssets = [...assets];
+      const updatedHistory = [...history];
       if (index >= 0) {
-        assets[index] = newAsset;
-        history.unshift(`Edited asset #${newAsset.assetNumber} (${newAsset.itemName}) on ${new Date().toLocaleString()}`);
+        updatedAssets[index] = newAsset;
+        updatedHistory.unshift(`Edited asset #${newAsset.assetNumber} (${newAsset.itemName}) on ${new Date().toLocaleString()}`);
       } else {
-        assets.push(newAsset);
-        history.unshift(`Added asset #${newAsset.assetNumber} (${newAsset.itemName}) on ${new Date().toLocaleString()}`);
+        updatedAssets.push(newAsset);
+        updatedHistory.unshift(`Added asset #${newAsset.assetNumber} (${newAsset.itemName}) on ${new Date().toLocaleString()}`);
       }
 
-      localStorage.setItem('assets', JSON.stringify(assets));
-      localStorage.setItem('history', JSON.stringify(history));
+      await saveData(updatedAssets, updatedHistory, `Update asset #${newAsset.assetNumber}`);
       document.getElementById('assetForm').reset();
       document.getElementById('editIndex').value = -1;
-      renderTable();
-      renderHistory();
     });
 
+    // Edit asset
     function editAsset(index) {
       const asset = assets[index];
       document.getElementById('employeeName').value = asset.employeeName;
@@ -155,12 +212,39 @@
       document.getElementById('editIndex').value = index;
     }
 
-    function showModal(title, content) {
+    // Delete asset
+    async function deleteAsset(index) {
+      const asset = assets[index];
+      if (!confirm(`Are you sure you want to delete asset #${asset.assetNumber}?`)) return;
+      const updatedAssets = assets.filter((_, i) => i !== index);
+      const updatedHistory = [...history, `Deleted asset #${asset.assetNumber} (${asset.itemName}) on ${new Date().toLocaleString()}`];
+      await saveData(updatedAssets, updatedHistory, `Delete asset #${asset.assetNumber}`);
+    }
+
+    // Delete history entry
+    async function deleteHistory(index) {
+      if (!confirm("Delete this history entry?")) return;
+      const updatedHistory = history.filter((_, i) => i !== index);
+      await saveData(assets, updatedHistory, "Delete history entry");
+    }
+
+    // View history for an asset
+    function viewHistory(assetNumber, itemType) {
+      const logs = history.filter(entry => entry.includes(`#${assetNumber}`));
+      const title = `History for ${itemType} (Asset ${assetNumber})`;
       document.getElementById('modalTitle').innerText = title;
-      document.getElementById('modalContent').innerHTML = content;
+      const modalContent = document.getElementById('modalContent');
+      modalContent.innerHTML = logs.length ? logs.map(l => `<li>${l}</li>`).join('') : '<li>No history available.</li>';
       document.getElementById('modal').classList.remove('hidden');
     }
 
+    // Polling for real-time updates
+    setInterval(loadData, 10000); // Refresh every 10 seconds
+
+    // Initialize data
+    loadData();
+
+    // Render table
     function renderTable(filter = '') {
       const container = document.getElementById('assetTableContainer');
       if (assets.length === 0) {
@@ -209,113 +293,7 @@
       container.innerHTML = html;
     }
 
-    function deleteAsset(index) {
-      const asset = assets[index];
-      if (!confirm(`Are you sure you want to delete asset #${asset.assetNumber}?`)) return;
-      history.unshift(`Deleted asset #${asset.assetNumber} (${asset.itemName}) on ${new Date().toLocaleString()}`);
-      assets.splice(index, 1);
-      localStorage.setItem('assets', JSON.stringify(assets));
-      localStorage.setItem('history', JSON.stringify(history));
-      renderTable();
-      renderHistory();
-    }
-
+    // Render history
     function renderHistory() {
       const historyLog = document.getElementById('historyLog');
-      historyLog.innerHTML = history.map((entry, i) => `<li>${entry} <button onclick="deleteHistory(${i})" class="text-red-500 ml-2">🗑</button></li>`).join('');
-    }
-
-    function deleteHistory(index) {
-      if (!confirm("Delete this history entry?")) return;
-      history.splice(index, 1);
-      localStorage.setItem('history', JSON.stringify(history));
-      renderHistory();
-    }
-
-    function toggleHistory() {
-      document.getElementById('historySection').classList.toggle('hidden');
-    }
-
-    function closeModal() {
-      document.getElementById('modal').classList.add('hidden');
-    }
-
-    function viewHistory(assetNumber, itemType) {
-      const logs = history.filter(entry => entry.includes(`#${assetNumber}`));
-      const title = `History for ${itemType} (Asset ${assetNumber})`;
-      document.getElementById('modalTitle').innerText = title;
-      const modalContent = document.getElementById('modalContent');
-      modalContent.innerHTML = logs.length ? logs.map(l => `<li>${l}</li>`).join('') : '<li>No history available.</li>';
-      document.getElementById('modal').classList.remove('hidden');
-    }
-
-    function printModalHistory() {
-      const printWindow = window.open('', '', 'width=800,height=600');
-      const title = document.getElementById('modalTitle').innerText;
-      const items = Array.from(document.getElementById('modalContent').children).map(li => `<li>${li.innerText}</li>`).join('');
-      printWindow.document.write(`
-        <html><head><title>Print History</title></head><body>
-        <h3>${title}</h3><ul>${items}</ul>
-        </body></html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
-    }
-
-    function downloadAssets() {
-      if (!assets.length) {
-        alert("No assets to download.");
-        return;
-      }
-      const headers = Object.keys(assets[0]);
-      const csvRows = [headers.join(',')];
-      for (const asset of assets) {
-        const row = headers.map(header => (asset[header] || '').replace(/"/g, '""')).join(',');
-        csvRows.push(row);
-      }
-      const csvData = csvRows.join('\n');
-      const blob = new Blob([csvData], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'assets.csv';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    function importCSV(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const text = e.target.result;
-        const lines = text.trim().split('\n');
-        const headers = lines[0].split(',');
-
-        for (let i = 1; i < lines.length; i++) {
-          const values = lines[i].split(',');
-          const asset = {};
-          headers.forEach((header, index) => {
-            asset[header.trim()] = values[index]?.trim().replace(/^"|"$/g, '') || '';
-          });
-          if (asset.assetNumber && asset.itemName) {
-            assets.push(asset);
-            history.unshift(`Imported asset #${asset.assetNumber} (${asset.itemName}) on ${new Date().toLocaleString()}`);
-          }
-        }
-
-        localStorage.setItem('assets', JSON.stringify(assets));
-        localStorage.setItem('history', JSON.stringify(history));
-        renderTable();
-        renderHistory();
-      };
-      reader.readAsText(file);
-    }
-
-    renderTable();
-    renderHistory();
-  </script>
-</body>
-</html>
+      historyLog.innerHTML = history.map((entry, i) => `<li>${entry} <button onclick="delete
