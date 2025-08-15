@@ -77,7 +77,7 @@
           <input type="text" id="assetNumber" class="w-full p-2 border rounded" required>
         </div>
         <div><label>Serial #</label>
-          <input type="text" id="serialNumber" class="w-full p-2 border rounded" required>
+          <input type="text" id="serialNumber" class="w-full p-2 border rounded">
         </div>
         <div><label>Item Name</label>
           <input type="text" id="itemName" class="w-full p-2 border rounded" required>
@@ -114,9 +114,17 @@
     const branch = "main";
     const filePath = "data.json";
     const githubApiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
-    const githubToken = "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";
-    let assets = JSON.parse(localStorage.getItem('assets') || '[]'); // Fallback to localStorage
+    const githubToken = "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"; // Replace with new PAT from https://github.com/settings/tokens
+    let assets = JSON.parse(localStorage.getItem('assets') || '[]');
     let history = JSON.parse(localStorage.getItem('history') || '[]');
+
+    // Show modal with error or message
+    function showModal(title, content) {
+      console.log(`Showing modal: ${title}`);
+      document.getElementById('modalTitle').innerText = title;
+      document.getElementById('modalContent').innerHTML = content;
+      document.getElementById('modal').classList.remove('hidden');
+    }
 
     // Fetch data from GitHub
     async function loadData() {
@@ -127,18 +135,24 @@
             "Accept": "application/vnd.github.v3+json",
           },
         });
+        const text = await response.text();
         if (!response.ok) {
-          const error = await response.json();
-          throw new Error(`Failed to fetch data: ${response.status} ${error.message}`);
+          console.error("Raw response:", text);
+          try {
+            const error = JSON.parse(text);
+            throw new Error(`Failed to fetch data: ${response.status} ${error.message}`);
+          } catch {
+            throw new Error(`Failed to fetch data: ${response.status} (Non-JSON response)`);
+          }
         }
-        const data = await response.json();
+        const data = JSON.parse(text);
         console.log("GitHub response:", data);
         const content = JSON.parse(atob(data.content));
         if (JSON.stringify(content.assets) !== JSON.stringify(assets) ||
             JSON.stringify(content.history) !== JSON.stringify(history)) {
           assets = content.assets || [];
           history = content.history || [];
-          localStorage.setItem('assets', JSON.stringify(assets)); // Cache locally
+          localStorage.setItem('assets', JSON.stringify(assets));
           localStorage.setItem('history', JSON.stringify(history));
           renderTable();
           renderHistory();
@@ -148,8 +162,9 @@
       } catch (error) {
         console.error("Error loading data:", error.message);
         showModal("Error", `<li>Failed to load data from GitHub: ${error.message}. Using cached data.</li>`);
-        renderTable(); // Render cached data
+        renderTable();
         renderHistory();
+        return null;
       }
     }
 
@@ -176,20 +191,31 @@
             }),
           });
           if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`Failed to save data: ${response.status} ${error.message}`);
+            const text = await response.text();
+            console.error("Save response:", text);
+            try {
+              const error = JSON.parse(text);
+              throw new Error(`Failed to save data: ${response.status} ${error.message}`);
+            } catch {
+              throw new Error(`Failed to save data: ${response.status} (Non-JSON response)`);
+            }
           }
           console.log("Data saved successfully");
           localStorage.setItem('assets', JSON.stringify(newAssets));
           localStorage.setItem('history', JSON.stringify(newHistory));
-          await loadData();
+          assets = newAssets;
+          history = newHistory;
+          renderTable();
+          renderHistory();
           return;
         } catch (error) {
           console.error(`Save attempt ${i + 1} failed:`, error.message);
           if (i === retries - 1) {
-            showModal("Error", `<li>Failed to save data to GitHub after ${retries} attempts: ${error.message}. Changes saved locally.</li>`);
+            showModal("Error", `<li>Failed to save data to GitHub: ${error.message}. Changes saved locally. Please check your GitHub Personal Access Token.</li>`);
             localStorage.setItem('assets', JSON.stringify(newAssets));
             localStorage.setItem('history', JSON.stringify(newHistory));
+            assets = newAssets;
+            history = newHistory;
             renderTable();
             renderHistory();
           }
@@ -201,6 +227,7 @@
     // Form submission
     document.getElementById('assetForm').addEventListener('submit', async function (e) {
       e.preventDefault();
+      console.log("Form submitted");
       const index = parseInt(document.getElementById('editIndex').value);
       const newAsset = {
         employeeName: document.getElementById('employeeName').value.trim(),
@@ -210,29 +237,36 @@
         serialNumber: document.getElementById('serialNumber').value.trim(),
         itemName: document.getElementById('itemName').value.trim(),
       };
+      console.log("New asset data:", newAsset);
 
       if (!newAsset.employeeName || !newAsset.assetNumber || !newAsset.itemName) {
-        showModal('Validation Error', '<li>Please fill in all required fields.</li>');
+        console.log("Validation failed: Missing required fields");
+        showModal('Validation Error', '<li>Please fill in all required fields (Employee Name, Asset #, Item Name).</li>');
         return;
       }
 
       const updatedAssets = [...assets];
       const updatedHistory = [...history];
       if (index >= 0) {
+        console.log(`Editing asset at index ${index}`);
         updatedAssets[index] = newAsset;
         updatedHistory.unshift(`Edited asset #${newAsset.assetNumber} (${newAsset.itemName}) on ${new Date().toLocaleString()}`);
       } else {
+        console.log("Adding new asset");
         updatedAssets.push(newAsset);
         updatedHistory.unshift(`Added asset #${newAsset.assetNumber} (${newAsset.itemName}) on ${new Date().toLocaleString()}`);
       }
 
+      console.log("Saving to GitHub:", updatedAssets, updatedHistory);
       await saveData(updatedAssets, updatedHistory, `Update asset #${newAsset.assetNumber}`);
       document.getElementById('assetForm').reset();
       document.getElementById('editIndex').value = -1;
+      console.log("Form reset");
     });
 
     // Edit asset
     function editAsset(index) {
+      console.log(`Editing asset at index ${index}`);
       const asset = assets[index];
       document.getElementById('employeeName').value = asset.employeeName;
       document.getElementById('location').value = asset.location;
@@ -245,6 +279,7 @@
 
     // Delete asset
     async function deleteAsset(index) {
+      console.log(`Deleting asset at index ${index}`);
       const asset = assets[index];
       if (!confirm(`Are you sure you want to delete asset #${asset.assetNumber}?`)) return;
       const updatedAssets = assets.filter((_, i) => i !== index);
@@ -254,6 +289,7 @@
 
     // Delete history entry
     async function deleteHistory(index) {
+      console.log(`Deleting history entry at index ${index}`);
       if (!confirm("Delete this history entry?")) return;
       const updatedHistory = history.filter((_, i) => i !== index);
       await saveData(assets, updatedHistory, "Delete history entry");
@@ -261,6 +297,7 @@
 
     // View history for an asset
     function viewHistory(assetNumber, itemType) {
+      console.log(`Viewing history for asset #${assetNumber}`);
       const logs = history.filter(entry => entry.includes(`#${assetNumber}`));
       const title = `History for ${itemType} (Asset ${assetNumber})`;
       document.getElementById('modalTitle').innerText = title;
@@ -276,10 +313,12 @@
     }, 10000);
 
     // Initialize data
+    console.log("Initializing application...");
     loadData();
 
     // Render table
     function renderTable(filter = '') {
+      console.log("Rendering table with filter:", filter);
       const container = document.getElementById('assetTableContainer');
       if (assets.length === 0) {
         container.innerHTML = '<p class="text-gray-500">No assets recorded.</p>';
@@ -329,22 +368,26 @@
 
     // Render history
     function renderHistory() {
+      console.log("Rendering history");
       const historyLog = document.getElementById('historyLog');
       historyLog.innerHTML = history.map((entry, i) => `<li>${entry} <button onclick="deleteHistory(${i})" class="text-red-500 ml-2">🗑</button></li>`).join('');
     }
 
     // Toggle history section
     function toggleHistory() {
+      console.log("Toggling history section");
       document.getElementById('historySection').classList.toggle('hidden');
     }
 
     // Close modal
     function closeModal() {
+      console.log("Closing modal");
       document.getElementById('modal').classList.add('hidden');
     }
 
     // Print history
     function printModalHistory() {
+      console.log("Printing history");
       const printWindow = window.open('', '', 'width=800,height=600');
       const title = document.getElementById('modalTitle').innerText;
       const items = Array.from(document.getElementById('modalContent').children).map(li => `<li>${li.innerText}</li>`).join('');
@@ -359,8 +402,9 @@
 
     // Download assets as CSV
     function downloadAssets() {
+      console.log("Downloading assets as CSV");
       if (!assets.length) {
-        alert("No assets to download.");
+        showModal("Error", "<li>No assets to download.</li>");
         return;
       }
       const headers = ["employeeName", "location", "itemType", "assetNumber", "serialNumber", "itemName"];
@@ -382,11 +426,13 @@
 
     // Import CSV
     async function importCSV(event) {
+      console.log("Importing CSV");
       const file = event.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
       reader.onload = async function (e) {
+        console.log("CSV file read");
         const text = e.target.result;
         const lines = text.trim().split('\n');
         const headers = lines[0].split(',');
@@ -404,6 +450,7 @@
             updatedHistory.unshift(`Imported asset #${asset.assetNumber} (${asset.itemName}) on ${new Date().toLocaleString()}`);
           }
         }
+        console.log("Saving imported CSV data:", updatedAssets, updatedHistory);
         await saveData(updatedAssets, updatedHistory, "Import CSV data");
       };
       reader.readAsText(file);
