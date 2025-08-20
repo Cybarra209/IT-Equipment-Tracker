@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -40,60 +41,62 @@
       <h1 class="text-2xl font-bold text-center">IT Asset Inventory Tracker</h1>
     </div>
 
-<div class="flex flex-wrap gap-2 mb-4">
-  <button onclick="toggleHistory()" class="bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600">Toggle Action History</button>
-  <button onclick="window.print()" class="bg-gray-700 text-white p-2 rounded hover:bg-gray-800">Print Assets</button>
-  <button onclick="printModalHistory()" class="bg-gray-600 text-white p-2 rounded hover:bg-gray-700">Print History</button>
-</div>
+    <div class="flex flex-wrap gap-2 mb-4">
+      <button onclick="toggleHistory()" class="bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600">Toggle Action History</button>
+      <button onclick="window.print()" class="bg-gray-700 text-white p-2 rounded hover:bg-gray-800">Print Assets</button>
+      <button onclick="printModalHistory()" class="bg-gray-600 text-white p-2 rounded hover:bg-gray-700">Print History</button>
+      <button onclick="clearAllAssets()" class="bg-red-600 text-white p-2 rounded hover:bg-red-700">Clear All</button>
+    </div>
 
-<div class="flex flex-col md:flex-row gap-2 mb-4">
-  <input type="text" id="search" placeholder="Search..." class="w-full md:w-1/3 p-2 border rounded" oninput="renderTable(this.value)">
-  <button onclick="downloadAssets()" class="bg-green-500 text-white p-2 rounded hover:bg-green-600">Download CSV</button>
-  <label class="bg-purple-500 text-white p-2 rounded hover:bg-purple-600 cursor-pointer text-center">
-    Import CSV
-    <input type="file" id="importFile" accept=".csv" class="hidden" onchange="importCSV(event)">
-  </label>
-</div>
+    <div class="flex flex-col md:flex-row gap-2 mb-4">
+      <input type="text" id="search" placeholder="Search..." class="w-full md:w-1/3 p-2 border rounded" oninput="renderTable(this.value)">
+      <button onclick="downloadAssets()" class="bg-green-500 text-white p-2 rounded hover:bg-green-600">Download CSV</button>
+      <label class="bg-purple-500 text-white p-2 rounded hover:bg-purple-600 cursor-pointer text-center">
+        Import CSV
+        <input type="file" id="importFile" accept=".csv" class="hidden" onchange="importCSV(event)">
+      </label>
+    </div>
 
-<form id="assetForm" class="mb-4">
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-    <div><label>Employee Name</label>
-      <input type="text" id="employeeName" class="w-full p-2 border rounded" required>
+    <form id="assetForm" class="mb-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div><label>Employee Name</label>
+          <input type="text" id="employeeName" class="w-full p-2 border rounded" required>
+        </div>
+        <div><label>Location</label>
+          <select id="location" class="w-full p-2 border rounded">
+            <option>Modesto</option><option>Ceres</option><option>Winton</option>
+            <option>Madera</option><option>Patterson</option>
+          </select>
+        </div>
+        <div><label>Item Type</label>
+          <select id="itemType" class="w-full p-2 border rounded">
+            <option>Laptop</option><option>Monitor</option><option>Desktop</option>
+            <option>Docking Station</option><option>Printer</option><option>Miscellaneous</option>
+          </select>
+        </div>
+        <div><label>Asset #</label>
+          <input type="text" id="assetNumber" class="w-full p-2 border rounded" required>
+        </div>
+        <div><label>Serial #</label>
+          <input type="text" id="serialNumber" class="w-full p-2 border rounded" required>
+        </div>
+        <div><label>Item Name</label>
+          <input type="text" id="itemName" class="w-full p-2 border rounded" required>
+        </div>
+      </div>
+      <input type="hidden" id="editIndex" value="-1">
+      <button type="submit" id="submitButton" class="mt-4 w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Add Asset</button>
+    </form>
+
+    <div id="printArea">
+      <div id="assetTableContainer" class="overflow-x-auto mb-6"></div>
     </div>
-    <div><label>Location</label>
-      <select id="location" class="w-full p-2 border rounded">
-        <option>Modesto</option><option>Ceres</option><option>Winton</option>
-        <option>Madera</option><option>Patterson</option>
-      </select>
-    </div>
-    <div><label>Item Type</label>
-      <select id="itemType" class="w-full p-2 border rounded">
-        <option>Laptop</option><option>Monitor</option><option>Desktop</option>
-        <option>Docking Station</option><option>Printer</option><option>Miscellaneous</option>
-      </select>
-    </div>
-    <div><label>Asset #</label>
-      <input type="text" id="assetNumber" class="w-full p-2 border rounded" required>
-    </div>
-    <div><label>Serial #</label>
-      <input type="text" id="serialNumber" class="w-full p-2 border rounded" required>
-    </div>
-    <div><label>Item Name</label>
-      <input type="text" id="itemName" class="w-full p-2 border rounded" required>
+
+    <div id="historySection" class="bg-gray-100 p-4 rounded border hidden">
+      <h2 class="font-bold text-lg mb-2">Action History</h2>
+      <ul id="historyLog" class="text-sm text-gray-700 list-disc list-inside"></ul>
     </div>
   </div>
-  <input type="hidden" id="editIndex" value="-1">
-  <button type="submit" id="submitButton" class="mt-4 w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Add Asset</button>
-</form>
-
-<div id="printArea">
-  <div id="assetTableContainer" class="overflow-x-auto mb-6"></div>
-</div>
-
-<div id="historySection" class="bg-gray-100 p-4 rounded border hidden">
-  <h2 class="font-bold text-lg mb-2">Action History</h2>
-  <ul id="historyLog" class="text-sm text-gray-700 list-disc list-inside"></ul>
-</div>  </div>
 
   <div id="modal" class="modal hidden">
     <div class="modal-content">
@@ -141,6 +144,16 @@
       renderTable();
       renderHistory();
     });
+
+    function clearAllAssets() {
+      if (!confirm("Are you sure you want to clear ALL assets? This cannot be undone.")) return;
+      history.unshift(`Cleared ALL assets on ${new Date().toLocaleString()}`);
+      assets = [];
+      localStorage.setItem('assets', JSON.stringify(assets));
+      localStorage.setItem('history', JSON.stringify(history));
+      renderTable();
+      renderHistory();
+    }
 
     function editAsset(index) {
       const asset = assets[index];
@@ -317,4 +330,3 @@
   </script>
 </body>
 </html>
-
