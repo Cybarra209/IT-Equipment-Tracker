@@ -233,7 +233,12 @@
 
     function renderHistory() {
       const historyLog = document.getElementById('historyLog');
-      historyLog.innerHTML = history.map((entry, i) => `<li>${entry} <button onclick="deleteHistory(${i})" class="text-red-500 ml-2"></button></li>`).join('');
+      historyLog.innerHTML = history.map((entry, i) => `
+        <li>
+          ${entry} 
+          <button onclick="deleteHistory(${i})" class="text-red-500 underline ml-2">Delete</button>
+        </li>
+      `).join('');
     }
 
     function deleteHistory(index) {
